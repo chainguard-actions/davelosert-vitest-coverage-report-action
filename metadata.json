@@ -1,7 +1,0 @@
-{
-  "owner": "davelosert",
-  "name": "vitest-coverage-report-action",
-  "visibility": "public",
-  "description": "Provide a Vitest Test Coverage Report as Step-Summary and comment in Pull Requests",
-  "block_publish": false
-}
