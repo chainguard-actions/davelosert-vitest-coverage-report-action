@@ -1,0 +1,337 @@
+import * as path from "node:path";
+import { oneLine } from "common-tags";
+import { FileCoverageMode } from "../inputs/FileCoverageMode";
+import type { SortBy } from "../inputs/sortBy";
+import type { JsonFinal } from "../types/JsonFinal";
+import type { CoverageReport, JsonSummary } from "../types/JsonSummary";
+import { generateBlobFileUrl } from "./generateFileUrl";
+import { getCompareString } from "./getCompareString";
+import {
+	getUncoveredLinesFromStatements,
+	type LineRange,
+} from "./getUncoveredLinesFromStatements";
+
+type FileCoverageInputs = {
+	jsonSummary: JsonSummary;
+	jsonSummaryCompare: JsonSummary | undefined;
+	jsonFinal: JsonFinal;
+	fileCoverageMode: FileCoverageMode;
+	pullChanges: string[];
+	commitSHA: string;
+	workspacePath: string;
+	comparisonDecimalPlaces?: number;
+	showUncoveredLines?: boolean;
+	sortBy?: SortBy;
+};
+
+const generateFileCoverageHtml = ({
+	jsonSummary,
+	jsonSummaryCompare,
+	jsonFinal,
+	fileCoverageMode,
+	pullChanges,
+	commitSHA,
+	workspacePath,
+	comparisonDecimalPlaces = 2,
+	showUncoveredLines = true,
+	sortBy = { metric: "name" } satisfies SortBy,
+}: FileCoverageInputs) => {
+	const filePaths = Object.keys(jsonSummary).filter((key) => key !== "total");
+
+	let reportData = "";
+
+	const [changedFiles, unchangedFiles] = splitFilesByChangeStatus(
+		filePaths,
+		pullChanges,
+		workspacePath,
+	);
+
+	sortFilesByMetric(changedFiles, jsonSummary, sortBy);
+	sortFilesByMetric(unchangedFiles, jsonSummary, sortBy);
+
+	if (
+		fileCoverageMode === FileCoverageMode.Changes &&
+		changedFiles.length === 0
+	) {
+		return "No changed files found.";
+	}
+
+	if (changedFiles.length > 0) {
+		reportData += `
+					${formatGroupLine("Changed Files", showUncoveredLines)} 
+					${changedFiles
+						.map((filePath) =>
+							generateRow(
+								filePath,
+								jsonSummary,
+								jsonSummaryCompare,
+								jsonFinal,
+								commitSHA,
+								workspacePath,
+								comparisonDecimalPlaces,
+								showUncoveredLines,
+							),
+						)
+						.join("")}
+				`;
+	}
+
+	if (
+		(fileCoverageMode === FileCoverageMode.ChangesAffected ||
+			fileCoverageMode === FileCoverageMode.All) &&
+		unchangedFiles.length > 0 &&
+		jsonSummaryCompare
+	) {
+		// Split unchanged files into affected and unaffected
+		const [affectedFiles, unaffectedFiles] = splitFilesByCoverageChange(
+			unchangedFiles,
+			jsonSummary,
+			jsonSummaryCompare,
+		);
+
+		if (affectedFiles.length > 0) {
+			reportData += `
+					${formatGroupLine("Affected Files", showUncoveredLines)}
+					${affectedFiles
+						.map((filePath) =>
+							generateRow(
+								filePath,
+								jsonSummary,
+								jsonSummaryCompare,
+								jsonFinal,
+								commitSHA,
+								workspacePath,
+								comparisonDecimalPlaces,
+								showUncoveredLines,
+							),
+						)
+						.join("")}
+				`;
+		}
+
+		// In All mode, also show unchanged files (without comparison data since they're unchanged)
+		if (
+			fileCoverageMode === FileCoverageMode.All &&
+			unaffectedFiles.length > 0
+		) {
+			reportData += `
+					${formatGroupLine("Unchanged Files", showUncoveredLines)}
+					${unaffectedFiles
+						.map((filePath) =>
+							generateRow(
+								filePath,
+								jsonSummary,
+								undefined,
+								jsonFinal,
+								commitSHA,
+								workspacePath,
+								comparisonDecimalPlaces,
+								showUncoveredLines,
+							),
+						)
+						.join("")}
+				`;
+		}
+	} else if (
+		fileCoverageMode === FileCoverageMode.ChangesAffected &&
+		unchangedFiles.length > 0 &&
+		!jsonSummaryCompare
+	) {
+		// Add a note that comparison data is needed for affected files
+		reportData += `
+			<tr>
+				<td colspan="${showUncoveredLines ? 6 : 5}"><em>Note: Comparison data is required to show affected files. Provide <code>json-summary-compare-path</code> to enable this feature.</em></td>
+			</tr>
+		`;
+	} else if (
+		fileCoverageMode === FileCoverageMode.All &&
+		unchangedFiles.length > 0
+	) {
+		// Fallback if no comparison data: show all unchanged files together
+		reportData += `
+					${formatGroupLine("Unchanged Files", showUncoveredLines)}
+					${unchangedFiles
+						.map((filePath) =>
+							generateRow(
+								filePath,
+								jsonSummary,
+								jsonSummaryCompare,
+								jsonFinal,
+								commitSHA,
+								workspacePath,
+								comparisonDecimalPlaces,
+								showUncoveredLines,
+							),
+						)
+						.join("")}
+			`;
+	}
+
+	return oneLine`
+		<table>
+			<thead>
+				<tr>
+				 <th align="left">File</th>
+				 <th align="right">Stmts</th>
+				 <th align="right">Branches</th>
+				 <th align="right">Functions</th>
+				 <th align="right">Lines</th>
+				 ${showUncoveredLines ? '<th align="left">Uncovered Lines</th>' : ""}
+				</tr>
+			</thead>
+			<tbody>
+			${reportData}
+			</tbody>
+		</table>
+	`;
+};
+
+function generateRow(
+	filePath: string,
+	jsonSummary: JsonSummary,
+	jsonSummaryCompare: JsonSummary | undefined,
+	jsonFinal: JsonFinal,
+	commitSHA: string,
+	workspacePath: string,
+	comparisonDecimalPlaces = 2,
+	showUncoveredLines = true,
+): string {
+	const coverageSummary = jsonSummary[filePath];
+	const coverageSummaryCompare = jsonSummaryCompare
+		? jsonSummaryCompare[filePath]
+		: undefined;
+	const lineCoverage = jsonFinal[filePath];
+
+	// LineCoverage might be empty if coverage-final.json was not provided.
+	const uncoveredLines = lineCoverage
+		? getUncoveredLinesFromStatements(jsonFinal[filePath])
+		: [];
+	const relativeFilePath = path.relative(workspacePath, filePath);
+	const url = generateBlobFileUrl(relativeFilePath, commitSHA);
+
+	return `
+			<tr>
+				<td align="left"><a href="${url}">${relativeFilePath}</a></td>
+					${generateCoverageCell(coverageSummary, coverageSummaryCompare, "statements", comparisonDecimalPlaces)}
+					${generateCoverageCell(coverageSummary, coverageSummaryCompare, "branches", comparisonDecimalPlaces)}
+					${generateCoverageCell(coverageSummary, coverageSummaryCompare, "functions", comparisonDecimalPlaces)}
+					${generateCoverageCell(coverageSummary, coverageSummaryCompare, "lines", comparisonDecimalPlaces)}
+				${showUncoveredLines ? `<td align="left">${createRangeURLs(uncoveredLines, url)}</td>` : ""}
+			</tr>`;
+}
+
+function generateCoverageCell(
+	summary: CoverageReport,
+	summaryCompare: CoverageReport | undefined,
+	field: keyof CoverageReport,
+	comparisonDecimalPlaces = 2,
+): string {
+	let diffText = "";
+	if (summaryCompare) {
+		const diff = summary[field].pct - summaryCompare[field].pct;
+		diffText = `<br/>${getCompareString(diff, comparisonDecimalPlaces)}`;
+	}
+	return `<td align="right">${summary[field].pct}%${diffText}</td>`;
+}
+
+function formatGroupLine(caption: string, showUncoveredLines = true): string {
+	return `
+				<tr>
+					<td align="left" colspan="${showUncoveredLines ? 6 : 5}"><b>${caption}</b></td>
+				</tr>
+	`;
+}
+
+function createRangeURLs(uncoveredLines: LineRange[], url: string): string {
+	return uncoveredLines
+		.map((range) => {
+			let linkText = `${range.start}`;
+			let urlHash = `#L${range.start}`;
+
+			if (range.start !== range.end) {
+				linkText += `-${range.end}`;
+				urlHash += `-L${range.end}`;
+			}
+
+			return `<a href="${url}${urlHash}" class="text-red">${linkText}</a>`;
+		})
+		.join(", ");
+}
+
+function splitFilesByChangeStatus(
+	filePaths: string[],
+	pullChanges: string[],
+	workspacePath: string,
+): [string[], string[]] {
+	return filePaths.reduce(
+		([changedFiles, unchangedFiles], filePath) => {
+			// Pull Changes has filePaths relative to the git repository, whereas the jsonSummary has filePaths relative to the workspace.
+			// So we have to convert the filePaths to be relative to the workspace.
+			const comparePath = path.relative(workspacePath, filePath);
+			if (pullChanges.includes(comparePath)) {
+				changedFiles.push(filePath);
+			} else {
+				unchangedFiles.push(filePath);
+			}
+			return [changedFiles, unchangedFiles];
+		},
+		[[], []] as [string[], string[]],
+	);
+}
+
+function sortFilesByMetric(
+	filePaths: string[],
+	jsonSummary: JsonSummary,
+	sortBy: SortBy,
+): void {
+	if (sortBy.metric === "name") {
+		return;
+	}
+	const { metric, direction } = sortBy;
+	filePaths.sort((a, b) => {
+		const aPct = jsonSummary[a]?.[metric].pct ?? 0;
+		const bPct = jsonSummary[b]?.[metric].pct ?? 0;
+		return direction === "asc" ? aPct - bPct : bPct - aPct;
+	});
+}
+
+function splitFilesByCoverageChange(
+	filePaths: string[],
+	jsonSummary: JsonSummary,
+	jsonSummaryCompare: JsonSummary,
+): [string[], string[]] {
+	const affectedFiles: string[] = [];
+	const unaffectedFiles: string[] = [];
+
+	for (const filePath of filePaths) {
+		const currentCoverage = jsonSummary[filePath];
+		const previousCoverage = jsonSummaryCompare[filePath];
+
+		// If file doesn't exist in comparison, consider it unaffected
+		if (!previousCoverage) {
+			unaffectedFiles.push(filePath);
+			continue;
+		}
+
+		// Check if any coverage metric has changed
+		// Using strict equality is acceptable here because:
+		// 1. These percentages come from the same source (vitest coverage reports)
+		// 2. The comparison is only for categorization, not for display
+		// 3. Any actual change will be reflected in the comparison display
+		const hasChanged =
+			currentCoverage.statements.pct !== previousCoverage.statements.pct ||
+			currentCoverage.branches.pct !== previousCoverage.branches.pct ||
+			currentCoverage.functions.pct !== previousCoverage.functions.pct ||
+			currentCoverage.lines.pct !== previousCoverage.lines.pct;
+
+		if (hasChanged) {
+			affectedFiles.push(filePath);
+		} else {
+			unaffectedFiles.push(filePath);
+		}
+	}
+
+	return [affectedFiles, unaffectedFiles];
+}
+
+export { generateFileCoverageHtml };
