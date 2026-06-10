@@ -5,28 +5,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_EVENT_NAME: push
       GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Copy fixture coverage files
-        run: |
-          mkdir -p coverage
-          cp "$GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-summary.json" coverage/coverage-summary.json
-          cp "$GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-final.json" coverage/coverage-final.json
-
-      - id: action
+      - name: Run vitest coverage report action with explicit vite-config-path
+        id: action
         uses: .
         with:
-          github-token: ${{ github.token }}
-          vite-config-path: actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/vite.config.ts
-          json-summary-path: coverage/coverage-summary.json
-          json-final-path: coverage/coverage-final.json
+          github-token: fake-token
+          vite-config-path: >-
+            ${{ github.workspace }}/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/vitest.config.js
+          json-summary-path: >-
+            ${{ github.workspace }}/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-summary.json
           file-coverage-mode: none
           comment-on: none
-
       - name: Assert action completed successfully with vite-config-path
         run: |
-          echo "Action completed without error using vite-config-path"
+          echo "Action completed successfully with vite-config-path"
           echo "PASS"

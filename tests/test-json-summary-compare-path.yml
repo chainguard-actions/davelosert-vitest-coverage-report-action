@@ -5,39 +5,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_EVENT_NAME: push
       GITHUB_REF: refs/heads/main
+      GITHUB_EVENT_NAME: push
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-
-      - name: Copy fixture coverage files and create compare file
-        run: |
-          mkdir -p coverage
-          cp "$GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-summary.json" coverage/coverage-summary.json
-          cp "$GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-final.json" coverage/coverage-final.json
-          # Create a previous coverage summary for comparison (slightly lower coverage)
-          cat > coverage/coverage-summary-base.json << 'EOF'
-          {
-            "total": {
-              "lines": { "total": 100, "covered": 70, "skipped": 0, "pct": 70 },
-              "statements": { "total": 100, "covered": 70, "skipped": 0, "pct": 70 },
-              "functions": { "total": 20, "covered": 14, "skipped": 0, "pct": 70 },
-              "branches": { "total": 40, "covered": 28, "skipped": 0, "pct": 70 }
-            }
-          }
-          EOF
-
-      - id: action
+      - name: Run vitest coverage report action with json-summary-compare-path
+        id: action
         uses: .
         with:
-          github-token: ${{ github.token }}
-          json-summary-path: coverage/coverage-summary.json
-          json-summary-compare-path: coverage/coverage-summary-base.json
-          json-final-path: coverage/coverage-final.json
+          github-token: fake-token
+          json-summary-path: >-
+            ${{ github.workspace }}/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-summary.json
+          json-summary-compare-path: >-
+            ${{ github.workspace }}/actions/hardened/davelosert--vitest-coverage-report-action/v2.12.0/tests/fixtures/coverage/coverage-summary-compare.json
           file-coverage-mode: none
           comment-on: none
-
       - name: Assert action completed successfully with compare path
         run: |
-          echo "Action completed without error using json-summary-compare-path"
+          echo "Action completed successfully with json-summary-compare-path"
           echo "PASS"
