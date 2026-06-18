@@ -13,6 +13,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v2.11.1 | [`v2.11.1`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.11.1) | — |
 | v2.11.2 | [`v2.11.2`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.11.2) | — |
 | v2.12.0 | [`v2.12.0`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.12.0) | [`02f3c2e`](https://github.com/davelosert/vitest-coverage-report-action/commit/02f3c2e641286b7fa308cd3e430783103ce6103b) |
+| v2.12.1 | [`v2.12.1`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.12.1) | [`3c054a2`](https://github.com/davelosert/vitest-coverage-report-action/commit/3c054a2d2e2ca45446417ad5d6d5eb33092af8f1) |
 | v2.9.3 | [`v2.9.3`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.9.3) | — |
 
 ## Privacy
