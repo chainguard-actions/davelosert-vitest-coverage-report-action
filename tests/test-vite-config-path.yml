@@ -1,0 +1,60 @@
+name: Test vite-config-path input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_EVENT_NAME: push
+      GITHUB_REF: refs/heads/main
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create vite config file
+        run: |
+          cat > vite.config.ts << 'EOF'
+          import { defineConfig } from 'vite'
+          export default defineConfig({
+            test: {
+              coverage: {
+                provider: 'v8',
+                reporter: ['json-summary', 'json']
+              }
+            }
+          })
+          EOF
+
+      - name: Create coverage summary file
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 90, "skipped": 0, "pct": 90 },
+              "statements": { "total": 100, "covered": 90, "skipped": 0, "pct": 90 },
+              "functions": { "total": 20, "covered": 18, "skipped": 0, "pct": 90 },
+              "branches": { "total": 40, "covered": 36, "skipped": 0, "pct": 90 }
+            }
+          }
+          EOF
+
+      - name: Create coverage final file
+        run: |
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          vite-config-path: vite.config.ts
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed successfully with vite-config-path
+        run: |
+          echo "Action with vite-config-path completed without error"
+          echo "PASS"
