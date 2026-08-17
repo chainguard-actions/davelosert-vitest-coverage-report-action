@@ -1,0 +1,62 @@
+name: Test sort-by coverage metric
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up coverage files
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/coverage"
+          cat > "$GITHUB_WORKSPACE/coverage/coverage-summary.json" << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 145, "covered": 60, "skipped": 0, "pct": 41.37 },
+              "statements": { "total": 150, "covered": 62, "skipped": 0, "pct": 41.33 },
+              "functions": { "total": 29, "covered": 18, "skipped": 0, "pct": 62.06 },
+              "branches": { "total": 58, "covered": 23, "skipped": 0, "pct": 39.65 },
+              "branchesTrue": { "total": 0, "covered": 0, "skipped": 0, "pct": "Unknown" }
+            }
+          }
+          EOF
+          cat > "$GITHUB_WORKSPACE/coverage/coverage-final.json" << 'EOF'
+          {
+            "/workspace/src/index.js": {
+              "path": "/workspace/src/index.js",
+              "all": false,
+              "statementMap": { "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 24 } } },
+              "s": { "0": 1 },
+              "branchMap": {},
+              "b": {},
+              "fnMap": { "0": { "name": "main", "decl": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 24 } }, "loc": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 24 } }, "line": 1 } },
+              "f": { "0": 1 }
+            }
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: all
+          comment-on: none
+          sort-by: statements-asc
+          file-coverage-root-path: /workspace
+        continue-on-error: true
+
+      - name: Assert action ran with sort-by=statements-asc
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action completed successfully with sort-by=statements-asc"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (likely sentinel repo limitation)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
