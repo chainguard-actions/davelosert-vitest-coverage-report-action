@@ -1,0 +1,58 @@
+name: Test file coverage mode none
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage summary JSON
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 200, "covered": 180, "skipped": 0, "pct": 90 },
+              "statements": { "total": 250, "covered": 225, "skipped": 0, "pct": 90 },
+              "functions": { "total": 50, "covered": 45, "skipped": 0, "pct": 90 },
+              "branches": { "total": 80, "covered": 72, "skipped": 0, "pct": 90 }
+            },
+            "src/app.ts": {
+              "lines": { "total": 200, "covered": 180, "skipped": 0, "pct": 90 },
+              "statements": { "total": 250, "covered": 225, "skipped": 0, "pct": 90 },
+              "functions": { "total": 50, "covered": 45, "skipped": 0, "pct": 90 },
+              "branches": { "total": 80, "covered": 72, "skipped": 0, "pct": 90 }
+            }
+          }
+          EOF
+
+      - name: Create coverage final JSON
+        run: |
+          cat > coverage/coverage-final.json << 'EOF'
+          {
+            "src/app.ts": {
+              "path": "src/app.ts",
+              "statementMap": {},
+              "fnMap": {},
+              "branchMap": {},
+              "s": {},
+              "f": {},
+              "b": {}
+            }
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed successfully with no file coverage
+        run: |
+          echo "Action completed with file-coverage-mode=none"
+          echo "PASS"

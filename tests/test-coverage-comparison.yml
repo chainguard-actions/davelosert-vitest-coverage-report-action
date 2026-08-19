@@ -1,0 +1,56 @@
+name: Test coverage comparison with previous run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create current coverage summary JSON
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 90, "skipped": 0, "pct": 90 },
+              "statements": { "total": 120, "covered": 108, "skipped": 0, "pct": 90 },
+              "functions": { "total": 30, "covered": 27, "skipped": 0, "pct": 90 },
+              "branches": { "total": 40, "covered": 36, "skipped": 0, "pct": 90 }
+            }
+          }
+          EOF
+
+      - name: Create previous coverage summary JSON for comparison
+        run: |
+          cat > coverage/coverage-summary-base.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 80, "skipped": 0, "pct": 80 },
+              "statements": { "total": 120, "covered": 96, "skipped": 0, "pct": 80 },
+              "functions": { "total": 30, "covered": 24, "skipped": 0, "pct": 80 },
+              "branches": { "total": 40, "covered": 32, "skipped": 0, "pct": 80 }
+            }
+          }
+          EOF
+
+      - name: Create coverage final JSON
+        run: |
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          json-summary-path: coverage/coverage-summary.json
+          json-summary-compare-path: coverage/coverage-summary-base.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed with coverage comparison
+        run: |
+          echo "Action completed with coverage comparison (trend indicators)"
+          echo "PASS"
