@@ -1,31 +1,32 @@
-name: Test basic usage
+name: Test basic coverage report
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: push
-      GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Copy fixture coverage files
+      - name: Prepare coverage files
         run: |
-          mkdir -p coverage
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.10.0/tests/fixtures/coverage/coverage-summary.json coverage/coverage-summary.json
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.10.0/tests/fixtures/coverage/coverage-final.json coverage/coverage-final.json
+          mkdir -p "$GITHUB_WORKSPACE/coverage"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-summary.json" \
+             "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-final.json" \
+             "$GITHUB_WORKSPACE/coverage/coverage-final.json"
+          echo "Coverage files prepared:"
+          cat "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
 
       - id: action
         uses: .
         with:
           github-token: ${{ github.token }}
-          json-summary-path: coverage/coverage-summary.json
-          json-final-path: coverage/coverage-final.json
+          json-summary-path: ${{ github.workspace }}/coverage/coverage-summary.json
+          json-final-path: ${{ github.workspace }}/coverage/coverage-final.json
           file-coverage-mode: none
           comment-on: none
 
       - name: Assert action completed successfully
         run: |
-          echo "Action completed without error"
-          echo "PASS"
+          echo "Action completed successfully"
+          echo "PASS: action ran without error"

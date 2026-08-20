@@ -1,4 +1,4 @@
-name: Test vite-config-path input
+name: Test file coverage mode all
 on:
   workflow_dispatch:
 jobs:
@@ -14,20 +14,21 @@ jobs:
              "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
           cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-final.json" \
              "$GITHUB_WORKSPACE/coverage/coverage-final.json"
-          echo "Coverage files prepared:"
-          cat "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
+          echo "Coverage files prepared"
 
       - id: action
         uses: .
         with:
           github-token: ${{ github.token }}
-          vite-config-path: ${{ github.workspace }}/tests/fixtures/vite-config/vitest.config.ts
           json-summary-path: ${{ github.workspace }}/coverage/coverage-summary.json
           json-final-path: ${{ github.workspace }}/coverage/coverage-final.json
-          file-coverage-mode: none
+          file-coverage-mode: all
+          file-coverage-expanded: 'true'
+          file-coverage-root-path: ${{ github.workspace }}
           comment-on: none
+          name: 'Unit Tests'
 
-      - name: Assert action completed successfully with vite-config-path
+      - name: Assert action completed successfully
         run: |
-          echo "Action completed successfully with vite-config-path input"
-          echo "PASS: action ran without error when vite-config-path is specified"
+          echo "Action completed with file-coverage-mode=all"
+          echo "PASS: action ran without error"

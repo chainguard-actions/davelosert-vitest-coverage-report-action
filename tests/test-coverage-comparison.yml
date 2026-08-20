@@ -1,4 +1,4 @@
-name: Test vite-config-path input
+name: Test coverage comparison with trend indicators
 on:
   workflow_dispatch:
 jobs:
@@ -10,24 +10,33 @@ jobs:
       - name: Prepare coverage files
         run: |
           mkdir -p "$GITHUB_WORKSPACE/coverage"
+          mkdir -p "$GITHUB_WORKSPACE/coverage-base"
+          # Current coverage
           cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-summary.json" \
              "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
           cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-final.json" \
              "$GITHUB_WORKSPACE/coverage/coverage-final.json"
-          echo "Coverage files prepared:"
+          # Base/compare coverage (higher numbers to show trend)
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-compare-simple/coverage-summary.json" \
+             "$GITHUB_WORKSPACE/coverage-base/coverage-summary.json"
+          echo "Coverage files prepared"
+          echo "Current summary:"
           cat "$GITHUB_WORKSPACE/coverage/coverage-summary.json"
+          echo "Compare summary:"
+          cat "$GITHUB_WORKSPACE/coverage-base/coverage-summary.json"
 
       - id: action
         uses: .
         with:
           github-token: ${{ github.token }}
-          vite-config-path: ${{ github.workspace }}/tests/fixtures/vite-config/vitest.config.ts
           json-summary-path: ${{ github.workspace }}/coverage/coverage-summary.json
           json-final-path: ${{ github.workspace }}/coverage/coverage-final.json
+          json-summary-compare-path: ${{ github.workspace }}/coverage-base/coverage-summary.json
           file-coverage-mode: none
           comment-on: none
+          comparison-decimal-places: '2'
 
-      - name: Assert action completed successfully with vite-config-path
+      - name: Assert action completed successfully
         run: |
-          echo "Action completed successfully with vite-config-path input"
-          echo "PASS: action ran without error when vite-config-path is specified"
+          echo "Action completed with coverage comparison"
+          echo "PASS: action ran without error"

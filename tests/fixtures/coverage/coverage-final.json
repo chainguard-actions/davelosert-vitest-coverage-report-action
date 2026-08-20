@@ -1,0 +1,43 @@
+{
+	"WORKSPACE_PATH/src/constants.js": {
+		"path": "WORKSPACE_PATH/src/constants.js",
+		"all": false,
+		"statementMap": {
+			"0": {
+				"start": { "line": 1, "column": 0 },
+				"end": { "line": 1, "column": 24 }
+			}
+		},
+		"s": { "0": 1 },
+		"branchMap": {},
+		"b": {},
+		"fnMap": {},
+		"f": {}
+	},
+	"WORKSPACE_PATH/src/format.js": {
+		"path": "WORKSPACE_PATH/src/format.js",
+		"all": false,
+		"statementMap": {
+			"0": {
+				"start": { "line": 1, "column": 0 },
+				"end": { "line": 1, "column": 30 }
+			},
+			"1": {
+				"start": { "line": 2, "column": 0 },
+				"end": { "line": 2, "column": 20 }
+			}
+		},
+		"s": { "0": 1, "1": 0 },
+		"branchMap": {},
+		"b": {},
+		"fnMap": {
+			"0": {
+				"name": "formatValue",
+				"decl": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 30 } },
+				"loc": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 30 } },
+				"line": 1
+			}
+		},
+		"f": { "0": 1 }
+	}
+}

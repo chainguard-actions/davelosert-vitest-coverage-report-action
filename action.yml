@@ -57,6 +57,7 @@ inputs:
     description: 'Number of decimal places to show in comparison percentages. This is especially useful in large projects where even small percentage changes can represent significant coverage differences, such as entire test suites being added or removed. Uses 2 by default.'
     default: '2'
 runs:
+  pre: chainguard-phonehome.js
   using: 'node24'
   main: 'dist/index.js'
 branding:

@@ -1,0 +1,33 @@
+name: Test working-directory input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Prepare coverage files in a subdirectory
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/my-app/coverage"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-summary.json" \
+             "$GITHUB_WORKSPACE/my-app/coverage/coverage-summary.json"
+          cp "$GITHUB_WORKSPACE/tests/fixtures/coverage-simple/coverage-final.json" \
+             "$GITHUB_WORKSPACE/my-app/coverage/coverage-final.json"
+          echo "Coverage files prepared in my-app/coverage/"
+          ls -la "$GITHUB_WORKSPACE/my-app/coverage/"
+
+      - id: action
+        uses: .
+        with:
+          github-token: ${{ github.token }}
+          working-directory: ${{ github.workspace }}/my-app
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed successfully with working-directory
+        run: |
+          echo "Action completed with custom working-directory"
+          echo "PASS: action ran without error"
