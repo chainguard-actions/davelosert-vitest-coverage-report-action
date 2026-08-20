@@ -8,7 +8,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
-| v2.10.0 | [`v2.10.0`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.10.0) | — |
+| v2.10.0 | [`v2.10.0`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.10.0) | [`bd52af5`](https://github.com/davelosert/vitest-coverage-report-action/commit/bd52af59d9cd548ea7cd405044d2458042e6d888) |
 | v2.11.0 | [`v2.11.0`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.11.0) | [`c0c9b09`](https://github.com/davelosert/vitest-coverage-report-action/commit/c0c9b09c93750ee1d8335d14e94ce3d6fc61df50) |
 | v2.11.1 | [`v2.11.1`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.11.1) | [`d63aa97`](https://github.com/davelosert/vitest-coverage-report-action/commit/d63aa97db4c0319f304f1787689de1ca548365cf) |
 | v2.11.2 | [`v2.11.2`](https://github.com/chainguard-actions/davelosert-vitest-coverage-report-action/tree/v2.11.2) | — |
