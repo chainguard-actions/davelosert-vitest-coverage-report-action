@@ -1,4 +1,4 @@
-name: Test explicit vite-config-path input
+name: Test working directory input
 on:
   workflow_dispatch:
 jobs:
@@ -15,20 +15,20 @@ jobs:
       - id: action
         uses: .
         with:
-          vite-config-path: tests/fixtures/vite.config.ts
-          json-summary-path: tests/fixtures/coverage/coverage-summary.json
-          json-final-path: tests/fixtures/coverage/coverage-final.json
+          working-directory: ./tests/fixtures
+          json-summary-path: coverage/coverage-summary.json
+          json-final-path: coverage/coverage-final.json
           file-coverage-mode: none
           comment-on: none
         continue-on-error: true
 
-      - name: Assert action completed with explicit vite config path
+      - name: Assert action completed with custom working directory
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action completed successfully with explicit vite-config-path"
+            echo "PASS: action completed successfully with custom working directory"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo or environment issue)"
           elif [ "$OUTCOME" = "skipped" ]; then

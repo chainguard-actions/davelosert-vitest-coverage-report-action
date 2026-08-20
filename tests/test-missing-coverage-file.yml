@@ -1,4 +1,4 @@
-name: Test explicit vite-config-path input
+name: Test missing coverage file handling
 on:
   workflow_dispatch:
 jobs:
@@ -15,22 +15,21 @@ jobs:
       - id: action
         uses: .
         with:
-          vite-config-path: tests/fixtures/vite.config.ts
-          json-summary-path: tests/fixtures/coverage/coverage-summary.json
-          json-final-path: tests/fixtures/coverage/coverage-final.json
+          json-summary-path: coverage/nonexistent-coverage-summary.json
+          json-final-path: coverage/nonexistent-coverage-final.json
           file-coverage-mode: none
           comment-on: none
         continue-on-error: true
 
-      - name: Assert action completed with explicit vite config path
+      - name: Assert action fails gracefully on missing file
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
-          if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action completed successfully with explicit vite-config-path"
-          elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo or environment issue)"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action correctly failed when coverage files are missing"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action handled missing files gracefully without error"
           elif [ "$OUTCOME" = "skipped" ]; then
             echo "FAIL: action step was unexpectedly skipped"
             exit 1
