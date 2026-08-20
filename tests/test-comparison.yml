@@ -1,0 +1,57 @@
+name: Test coverage comparison with previous run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create current coverage summary JSON
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 85, "skipped": 0, "pct": 85 },
+              "statements": { "total": 100, "covered": 85, "skipped": 0, "pct": 85 },
+              "functions": { "total": 20, "covered": 17, "skipped": 0, "pct": 85 },
+              "branches": { "total": 40, "covered": 34, "skipped": 0, "pct": 85 }
+            }
+          }
+          EOF
+
+      - name: Create previous coverage summary JSON for comparison
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary-base.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 75, "skipped": 0, "pct": 75 },
+              "statements": { "total": 100, "covered": 75, "skipped": 0, "pct": 75 },
+              "functions": { "total": 20, "covered": 15, "skipped": 0, "pct": 75 },
+              "branches": { "total": 40, "covered": 30, "skipped": 0, "pct": 75 }
+            }
+          }
+          EOF
+
+      - name: Create coverage final JSON
+        run: |
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          json-summary-path: coverage/coverage-summary.json
+          json-summary-compare-path: coverage/coverage-summary-base.json
+          json-final-path: coverage/coverage-final.json
+          file-coverage-mode: none
+          comment-on: none
+          comparison-decimal-places: '3'
+
+      - name: Assert action succeeded with comparison
+        run: |
+          echo "Action completed successfully with coverage comparison"
+          echo "PASS"

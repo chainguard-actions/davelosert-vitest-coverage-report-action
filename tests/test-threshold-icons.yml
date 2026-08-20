@@ -1,4 +1,4 @@
-name: Test basic usage with comment-on none
+name: Test threshold icons and named report
 on:
   workflow_dispatch:
 jobs:
@@ -13,10 +13,10 @@ jobs:
           cat > coverage/coverage-summary.json << 'EOF'
           {
             "total": {
-              "lines": { "total": 100, "covered": 80, "skipped": 0, "pct": 80 },
-              "statements": { "total": 100, "covered": 80, "skipped": 0, "pct": 80 },
-              "functions": { "total": 20, "covered": 16, "skipped": 0, "pct": 80 },
-              "branches": { "total": 40, "covered": 32, "skipped": 0, "pct": 80 }
+              "lines": { "total": 100, "covered": 95, "skipped": 0, "pct": 95 },
+              "statements": { "total": 100, "covered": 95, "skipped": 0, "pct": 95 },
+              "functions": { "total": 20, "covered": 19, "skipped": 0, "pct": 95 },
+              "branches": { "total": 40, "covered": 38, "skipped": 0, "pct": 95 }
             }
           }
           EOF
@@ -34,8 +34,10 @@ jobs:
           json-final-path: coverage/coverage-final.json
           file-coverage-mode: none
           comment-on: none
+          name: 'Unit Tests'
+          threshold-icons: '{"0": "🔴", "80": "🟠", "90": "🟢"}'
 
-      - name: Assert action succeeded
+      - name: Assert action succeeded with threshold icons
         run: |
-          echo "Action completed successfully"
+          echo "Action completed successfully with threshold icons and named report"
           echo "PASS"

@@ -4,29 +4,53 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: push
-      GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Copy fixture coverage files to expected location
+      - name: Create vite config file
+        run: |
+          cat > vitest.config.ts << 'EOF'
+          import { defineConfig } from 'vitest/config'
+          export default defineConfig({
+            test: {
+              coverage: {
+                provider: 'v8',
+                reporter: ['json-summary', 'json'],
+              },
+            },
+          })
+          EOF
+
+      - name: Create coverage summary JSON
         run: |
           mkdir -p coverage
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.9.3/tests/fixtures/coverage/coverage-summary.json coverage/coverage-summary.json
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.9.3/tests/fixtures/coverage/coverage-final.json coverage/coverage-final.json
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 200, "covered": 190, "skipped": 0, "pct": 95 },
+              "statements": { "total": 200, "covered": 190, "skipped": 0, "pct": 95 },
+              "functions": { "total": 50, "covered": 48, "skipped": 0, "pct": 96 },
+              "branches": { "total": 80, "covered": 76, "skipped": 0, "pct": 95 }
+            }
+          }
+          EOF
+
+      - name: Create coverage final JSON
+        run: |
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
 
       - id: action
         uses: .
         with:
-          github-token: ${{ github.token }}
-          vite-config-path: ${{ github.workspace }}/actions/hardened/davelosert--vitest-coverage-report-action/v2.9.3/tests/fixtures/vite.config.ts
+          vite-config-path: vitest.config.ts
           json-summary-path: coverage/coverage-summary.json
           json-final-path: coverage/coverage-final.json
           file-coverage-mode: none
           comment-on: none
 
-      - name: Assert action completed successfully with vite-config-path
+      - name: Assert action succeeded
         run: |
-          echo "Action completed without error using explicit vite-config-path"
+          echo "Action completed successfully with vite-config-path input"
           echo "PASS"
