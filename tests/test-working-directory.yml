@@ -1,0 +1,37 @@
+name: Test working directory input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage files in a subdirectory
+        run: |
+          mkdir -p packages/my-lib/coverage
+          cat > packages/my-lib/coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 60, "skipped": 0, "pct": 60 },
+              "statements": { "total": 200, "covered": 120, "skipped": 0, "pct": 60 },
+              "functions": { "total": 50, "covered": 30, "skipped": 0, "pct": 60 },
+              "branches": { "total": 40, "covered": 24, "skipped": 0, "pct": 60 }
+            }
+          }
+          EOF
+          cat > packages/my-lib/coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          working-directory: packages/my-lib
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed with working directory
+        run: |
+          echo "Action completed with custom working directory"
+          echo "PASS"

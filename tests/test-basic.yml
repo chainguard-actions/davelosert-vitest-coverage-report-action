@@ -4,24 +4,29 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_EVENT_NAME: push
-      GITHUB_REF: refs/heads/main
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Set up coverage files
+      - name: Create coverage directory and summary file
         run: |
           mkdir -p coverage
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.11.2/tests/fixtures/coverage/coverage-summary.json coverage/coverage-summary.json
-          cp $GITHUB_WORKSPACE/actions/hardened/davelosert--vitest-coverage-report-action/v2.11.2/tests/fixtures/coverage/coverage-final.json coverage/coverage-final.json
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 80, "skipped": 0, "pct": 80 },
+              "statements": { "total": 200, "covered": 160, "skipped": 0, "pct": 80 },
+              "functions": { "total": 50, "covered": 40, "skipped": 0, "pct": 80 },
+              "branches": { "total": 40, "covered": 32, "skipped": 0, "pct": 80 }
+            }
+          }
+          EOF
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
 
       - id: action
         uses: .
         with:
-          github-token: ${{ github.token }}
-          json-summary-path: coverage/coverage-summary.json
-          json-final-path: coverage/coverage-final.json
           file-coverage-mode: none
           comment-on: none
 

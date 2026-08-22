@@ -1,0 +1,38 @@
+name: Test custom coverage file paths
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage files at custom paths
+        run: |
+          mkdir -p reports/custom
+          cat > reports/custom/summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 200, "covered": 150, "skipped": 0, "pct": 75 },
+              "statements": { "total": 400, "covered": 300, "skipped": 0, "pct": 75 },
+              "functions": { "total": 100, "covered": 75, "skipped": 0, "pct": 75 },
+              "branches": { "total": 80, "covered": 60, "skipped": 0, "pct": 75 }
+            }
+          }
+          EOF
+          cat > reports/custom/final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          json-summary-path: reports/custom/summary.json
+          json-final-path: reports/custom/final.json
+          file-coverage-mode: none
+          comment-on: none
+
+      - name: Assert action completed with custom paths
+        run: |
+          echo "Action completed with custom coverage file paths"
+          echo "PASS"

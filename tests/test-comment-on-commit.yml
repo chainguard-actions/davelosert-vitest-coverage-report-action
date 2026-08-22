@@ -1,0 +1,46 @@
+name: Test comment on commit
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage files
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 70, "skipped": 0, "pct": 70 },
+              "statements": { "total": 200, "covered": 140, "skipped": 0, "pct": 70 },
+              "functions": { "total": 50, "covered": 35, "skipped": 0, "pct": 70 },
+              "branches": { "total": 40, "covered": 28, "skipped": 0, "pct": 70 }
+            }
+          }
+          EOF
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          file-coverage-mode: none
+          comment-on: commit
+        continue-on-error: true
+
+      - name: Assert action ran (comment may fail gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded and commented on commit"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

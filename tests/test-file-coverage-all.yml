@@ -1,0 +1,53 @@
+name: Test file coverage mode all
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage files with file-level data
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 90, "skipped": 0, "pct": 90 },
+              "statements": { "total": 200, "covered": 180, "skipped": 0, "pct": 90 },
+              "functions": { "total": 50, "covered": 45, "skipped": 0, "pct": 90 },
+              "branches": { "total": 40, "covered": 36, "skipped": 0, "pct": 90 }
+            },
+            "/github/workspace/src/index.ts": {
+              "lines": { "total": 50, "covered": 45, "skipped": 0, "pct": 90 },
+              "statements": { "total": 100, "covered": 90, "skipped": 0, "pct": 90 },
+              "functions": { "total": 25, "covered": 22, "skipped": 0, "pct": 88 },
+              "branches": { "total": 20, "covered": 18, "skipped": 0, "pct": 90 }
+            }
+          }
+          EOF
+          cat > coverage/coverage-final.json << 'EOF'
+          {
+            "/github/workspace/src/index.ts": {
+              "path": "/github/workspace/src/index.ts",
+              "all": false,
+              "statementMap": {
+                "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 20 } },
+                "1": { "start": { "line": 2, "column": 0 }, "end": { "line": 2, "column": 20 } }
+              },
+              "s": { "0": 1, "1": 0 }
+            }
+          }
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          file-coverage-mode: all
+          comment-on: none
+          file-coverage-root-path: /github/workspace
+
+      - name: Assert action completed successfully with file coverage
+        run: |
+          echo "Action completed with file-coverage-mode=all"
+          echo "PASS"

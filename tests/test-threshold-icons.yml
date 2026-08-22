@@ -1,0 +1,40 @@
+name: Test threshold icons and expanded file coverage
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create coverage files
+        run: |
+          mkdir -p coverage
+          cat > coverage/coverage-summary.json << 'EOF'
+          {
+            "total": {
+              "lines": { "total": 100, "covered": 85, "skipped": 0, "pct": 85 },
+              "statements": { "total": 200, "covered": 170, "skipped": 0, "pct": 85 },
+              "functions": { "total": 50, "covered": 42, "skipped": 0, "pct": 84 },
+              "branches": { "total": 40, "covered": 34, "skipped": 0, "pct": 85 }
+            }
+          }
+          EOF
+          cat > coverage/coverage-final.json << 'EOF'
+          {}
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          file-coverage-mode: none
+          comment-on: none
+          file-coverage-expanded: 'true'
+          show-uncovered-lines: 'false'
+          threshold-icons: '{"0": "🔴", "80": "🟠", "90": "🟢"}'
+          comparison-decimal-places: '3'
+
+      - name: Assert action completed with threshold icons
+        run: |
+          echo "Action completed with threshold icons and expanded file coverage settings"
+          echo "PASS"
