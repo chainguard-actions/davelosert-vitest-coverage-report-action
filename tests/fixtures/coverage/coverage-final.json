@@ -1,0 +1,33 @@
+{
+  "/github/workspace/src/index.ts": {
+    "path": "/github/workspace/src/index.ts",
+    "statementMap": {
+      "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 30 } },
+      "1": { "start": { "line": 5, "column": 0 }, "end": { "line": 5, "column": 20 } }
+    },
+    "fnMap": {
+      "0": { "name": "main", "decl": { "start": { "line": 3, "column": 0 }, "end": { "line": 3, "column": 20 } }, "loc": { "start": { "line": 3, "column": 0 }, "end": { "line": 10, "column": 1 } }, "line": 3 }
+    },
+    "branchMap": {},
+    "s": { "0": 1, "1": 1 },
+    "f": { "0": 5 },
+    "b": {}
+  },
+  "/github/workspace/src/utils.ts": {
+    "path": "/github/workspace/src/utils.ts",
+    "statementMap": {
+      "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 30 } },
+      "1": { "start": { "line": 10, "column": 0 }, "end": { "line": 10, "column": 20 } },
+      "2": { "start": { "line": 15, "column": 0 }, "end": { "line": 15, "column": 20 } },
+      "3": { "start": { "line": 20, "column": 0 }, "end": { "line": 20, "column": 20 } }
+    },
+    "fnMap": {
+      "0": { "name": "helper", "decl": { "start": { "line": 8, "column": 0 }, "end": { "line": 8, "column": 20 } }, "loc": { "start": { "line": 8, "column": 0 }, "end": { "line": 12, "column": 1 } }, "line": 8 },
+      "1": { "name": "unused", "decl": { "start": { "line": 14, "column": 0 }, "end": { "line": 14, "column": 20 } }, "loc": { "start": { "line": 14, "column": 0 }, "end": { "line": 22, "column": 1 } }, "line": 14 }
+    },
+    "branchMap": {},
+    "s": { "0": 1, "1": 1, "2": 0, "3": 0 },
+    "f": { "0": 3, "1": 0 },
+    "b": {}
+  }
+}
