@@ -1,0 +1,120 @@
+name: Test basic coverage report
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create coverage fixtures and summary capture hook
+        run: |
+          D="$GITHUB_WORKSPACE/vcr-fixture"
+          mkdir -p "$D/coverage"
+          cat > "$D/vitest.config.mjs" <<'EOF'
+          export default {
+            test: {
+              coverage: {
+                thresholds: {
+                  lines: 60,
+                  statements: 70,
+                  functions: 70,
+                  branches: 40,
+                },
+              },
+            },
+          };
+          EOF
+          cat > "$D/coverage/coverage-summary.json" <<'EOF'
+          {
+            "total": {
+              "lines": { "total": 10, "covered": 8, "skipped": 0, "pct": 80 },
+              "statements": { "total": 10, "covered": 8, "skipped": 0, "pct": 80 },
+              "functions": { "total": 4, "covered": 3, "skipped": 0, "pct": 75 },
+              "branches": { "total": 4, "covered": 2, "skipped": 0, "pct": 50 }
+            },
+            "/project/src/math.ts": {
+              "lines": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+              "statements": { "total": 6, "covered": 6, "skipped": 0, "pct": 100 },
+              "functions": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 },
+              "branches": { "total": 2, "covered": 2, "skipped": 0, "pct": 100 }
+            },
+            "/project/src/util.ts": {
+              "lines": { "total": 4, "covered": 2, "skipped": 0, "pct": 50 },
+              "statements": { "total": 4, "covered": 2, "skipped": 0, "pct": 50 },
+              "functions": { "total": 2, "covered": 1, "skipped": 0, "pct": 50 },
+              "branches": { "total": 2, "covered": 0, "skipped": 0, "pct": 0 }
+            }
+          }
+          EOF
+          cat > "$D/coverage/coverage-final.json" <<'EOF'
+          {
+            "/project/src/math.ts": {
+              "path": "/project/src/math.ts",
+              "statementMap": {
+                "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 20 } },
+                "1": { "start": { "line": 2, "column": 0 }, "end": { "line": 2, "column": 20 } }
+              },
+              "s": { "0": 1, "1": 1 },
+              "fnMap": {}, "f": {}, "branchMap": {}, "b": {}
+            },
+            "/project/src/util.ts": {
+              "path": "/project/src/util.ts",
+              "statementMap": {
+                "0": { "start": { "line": 1, "column": 0 }, "end": { "line": 1, "column": 20 } },
+                "1": { "start": { "line": 2, "column": 0 }, "end": { "line": 2, "column": 20 } },
+                "2": { "start": { "line": 3, "column": 0 }, "end": { "line": 3, "column": 20 } },
+                "3": { "start": { "line": 4, "column": 0 }, "end": { "line": 4, "column": 20 } }
+              },
+              "s": { "0": 1, "1": 1, "2": 0, "3": 0 },
+              "fnMap": {}, "f": {}, "branchMap": {}, "b": {}
+            }
+          }
+          EOF
+          # act resets GITHUB_STEP_SUMMARY per step, so capture it on node exit
+          cat > /tmp/vcr-capture.js <<'EOF'
+          const fs = require('fs');
+          process.on('exit', () => {
+            try {
+              const p = process.env.GITHUB_STEP_SUMMARY;
+              const out = process.env.VCR_CAPTURE_PATH;
+              if (p && out && fs.existsSync(p)) fs.copyFileSync(p, out);
+            } catch (e) {}
+          });
+          EOF
+          rm -f /tmp/report-basic.md
+      - id: action
+        uses: .
+        env:
+          NODE_OPTIONS: --require /tmp/vcr-capture.js
+          VCR_CAPTURE_PATH: /tmp/report-basic.md
+        with:
+          working-directory: vcr-fixture
+          name: act-basic
+          file-coverage-root-path: /project
+      - name: Assert action step succeeded
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" != "success" ]; then echo "FAIL: action did not succeed"; exit 1; fi
+          echo "PASS"
+      - name: Assert summary contents
+        run: |
+          R=/tmp/report-basic.md
+          if [ ! -s "$R" ]; then echo "FAIL: captured summary missing/empty"; exit 1; fi
+          cat "$R"; echo
+          fail=0
+          check() { if grep -qF -- "$1" "$R"; then echo "PASS: found '$1'"; else echo "FAIL: missing '$1'"; fail=1; fi; }
+          check "Coverage Report for act-basic (vcr-fixture)"
+          check "Covered / Total"
+          check "Lines"
+          check "80%"
+          check "8 / 10"
+          check "3 / 4"
+          check "2 / 4"
+          # threshold parsed from vcr-fixture/vitest.config.mjs
+          check "60%)"
+          # default file-coverage-mode "changes" with no PR => no changed files
+          check "No changed files found."
+          check "File Coverage"
+          exit $fail
